@@ -1,0 +1,154 @@
+﻿
+select * from agencia
+
+select * from cidade
+
+select * from conta
+
+select * from empregado
+
+select * from fechamento_caixa
+
+select * from operacoes_conta
+
+select * from perfil_regional
+
+select * from regional
+
+select * from servico
+
+select * from uf
+
+
+-- --------------------------------------------------------- Questão 1 ---------------------------------------------------------
+
+-- select 1 as operacao, 5 as conta, a.nm_agencia as agencia, e.nm_empregado as funcionario, oc.dt_operacao as data_operacao
+-- from servico s 
+-- inner join operacoes_conta oc ON  s.id_servico = oc.id_servico
+-- inner join conta c ON c.id_conta = oc.id_servico
+-- inner join empregado e ON e.id_empregado = oc.id_empregado
+-- inner join agencia a ON a.id_agencia = oc.id_agencia
+-- where 1 = oc.id_servico AND 5 = oc.id_conta 
+
+CREATE OR REPLACE FUNCTION quest1 (integer, integer)
+RETURNS VOID AS
+$$ 
+	DECLARE
+		Codigo alias for $1;
+		Conta alias for $2;
+		reg RECORD;
+	BEGIN
+		RAISE NOTICE 'Codigo: % - Conta: % ', Codigo, Conta;
+		FOR reg IN SELECT * from servico s 
+		inner join operacoes_conta oc ON  s.id_servico = oc.id_servico
+		inner join conta c ON c.id_conta = oc.id_servico
+		inner join empregado e ON e.id_empregado = oc.id_empregado
+		inner join agencia a ON a.id_agencia = oc.id_agencia
+		LOOP
+			IF(Codigo = reg.id_servico AND Conta = reg.id_conta)
+			THEN
+				RAISE NOTICE 'Ag.:% - Funcionário:% - Data da Operação:%', reg.nm_agencia, reg.nm_empregado, reg.dt_operacao;
+			END IF;	
+		END LOOP;
+	END;
+$$
+LANGUAGE 'plpgsql'
+ 		
+
+select * from quest1(1, 5);
+
+create user "auditor"
+
+GRANT EXECUTE ON FUNCTION quest1(integer, integer) TO "auditor"
+
+
+
+-- --------------------------------------------------------- Questão 2 ---------------------------------------------------------
+
+-- select * from empregado e
+-- inner join operacoes_conta oc ON e.id_empregado = oc.id_empregado
+-- where (dt_operacao < '2015-12-30' AND dt_operacao > '2015-01-01')
+
+
+CREATE OR REPLACE FUNCTION quest2 (timestamp, timestamp)
+RETURNS VOID AS
+$$ 
+	DECLARE
+		dt_inicial alias for $1;
+		dt_final alias for $2;
+		reg RECORD;
+		reg2 RECORD;
+		quant integer;
+	BEGIN
+		RAISE NOTICE 'Data Inicial: % - Data Final: % ', dt_inicial, dt_final;
+		quant := 0;
+		FOR reg IN select * from empregado e
+		LOOP
+			FOR reg2 IN select * from empregado e
+			inner join operacoes_conta oc ON e.id_empregado = oc.id_empregado
+			where (dt_operacao < dt_final AND dt_operacao > dt_inicial)
+			LOOP
+				-- debug: RAISE NOTICE 'reg -> %   ------------    reg2 -> %', reg.nm_empregado, reg2.nm_empregado;
+				IF(reg.id_empregado = reg2.id_empregado)
+				THEN
+					quant := quant + 1;
+				END IF;	
+			END LOOP;
+			
+			IF(quant < reg.nu_meta_mensal)
+			THEN
+				RAISE NOTICE 'O funcionário(a) % esta abaixo da meta nesse período.', reg.nm_empregado;
+			END IF;
+		END LOOP;
+	END;
+$$
+LANGUAGE 'plpgsql'
+
+select * from quest2 ('2000-01-01', '2018-12-30');
+
+
+-- ---------------------------------------------------------- Questão 3 --------------------------------------------------------
+
+
+CREATE OR REPLACE FUNCTION quest3 (varchar(120))
+RETURNS VOID AS
+$$ 
+	DECLARE
+		regional alias for $1;
+		reg RECORD;
+		reg2 RECORD;
+		qtd INTEGER;
+	BEGIN
+		qtd=0;
+		RAISE NOTICE 'Regional: % ',regional;
+		FOR reg IN SELECT nm_agencia,COUNT(nm_servico) as total FROM agencia a
+		INNER JOIN regional r ON r.id_regional=a.id_regional
+		INNER JOIN  operacoes_conta oc ON a.id_agencia=oc.id_agencia
+		INNER JOIN servico s ON s.id_servico= oc.id_servico
+		WHERE nm_regional = regional
+		GROUP BY nm_agencia
+		LOOP
+			RAISE NOTICE 'Agencia: % - Numero de servicos %', reg.nm_agencia, reg.total;
+		END LOOP;
+	END;
+$$
+LANGUAGE 'plpgsql'
+
+select * from quest3('Oeste');
+
+
+-- ---------------------------------------------------------- Questão 4 --------------------------------------------------------
+
+CREATE OR REPLACE VIEW viewquestao4 
+AS
+SELECT nm_empregado FROM empregado e
+INNER JOIN fechamento_caixa fc ON e.id_empregado=fc.id_empregado
+WHERE nu_meta_mensal >= vl_diferenca 
+
+select * from viewquestao4 ;
+
+CREATE USER auditor;
+ALTER USER "auditor" WITH PASSWORD '123456';
+
+GRANT ALL PRIVILEGES ON DATABASE atividade10 TO "auditor"
+GRANT SELECT ON viewquestao4 TO "auditor"

@@ -1,0 +1,46 @@
+﻿create table cliente(
+	cpf varchar(11) PRIMARY KEY,
+	nome varchar(50),
+	email varchar(50)
+);
+
+create table usuario(
+	usuario varchar(15) PRIMARY KEY,
+	cpf varchar(11),
+	senha varchar(50)
+);
+
+ALTER TABLE usuario ADD	
+CONSTRAINT possui_fk FOREIGN KEY (cpf)
+REFERENCES cliente(cpf) MATCH SIMPLE
+ON UPDATE RESTRICT ON DELETE RESTRICT;
+
+
+select * from cliente
+select * from usuario
+
+select * from cliente c
+inner join usuario u on c.cpf = u.cpf
+
+-- Criando usuário
+create user "SistemaEstoque";
+alter user "SistemaEstoque" WITH PASSWORD 'senha';
+
+GRANT SELECT ON usuario TO "SistemaEstoque"
+GRANT SELECT ON cliente TO "SistemaEstoque"
+GRANT UPDATE ON usuario TO "SistemaEstoque"
+GRANT INSERT ON usuario TO "SistemaEstoque"
+GRANT INSERT ON cliente TO "SistemaEstoque"
+
+-- conferindo se usuario ja existe
+select usuario from usuario u where u.usuario='user1' 
+
+-- inserindo na tabela
+insert into cliente values('12345678912','nome1','email@email');
+insert into usuario values('user1', '12345678912', '123');
+
+-- logando 
+select * from usuario u where u.usuario ='user1' and u.senha='senha1';
+
+-- alterando senha do cliente
+update usuario set senha ='senha1' where usuario='user1'

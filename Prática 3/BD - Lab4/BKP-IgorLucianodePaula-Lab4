@@ -1,0 +1,97 @@
+﻿-- posso fazer com o WHERE ou o INNER JOIN ON
+
+select * from fornecedor;
+
+select * from fornecimento;
+
+select * from peca;
+
+select * from projeto;
+
+
+------------1-----------------------
+
+select fnome, fcidade from fornecedor;
+
+-----------------------------------
+
+-----------2------------------------
+
+select pnome from peca
+where peso > 15;
+
+------------------------------------
+
+-----------3------------------------
+
+select fornecedor.fnome from fornecedor
+inner join fornecimento on fornecimento.fcodigo = fornecedor.fcodigo
+where fornecimento.jcodigo = 1;
+
+------------------------------------
+
+-----------4------------------------
+
+select sum(quantidade) from projeto
+inner join fornecimento on fornecimento.jcodigo = projeto.jcodigo
+where fornecimento.jcodigo = 2;
+
+------------------------------------
+
+-----------5------------------------
+
+select sum(quantidade) from fornecedor
+inner join fornecimento on fornecimento.fcodigo = fornecedor.fcodigo
+where (fornecimento.fcodigo = 1 and fornecimento.jcodigo = 1);
+
+------------------------------------
+
+-----------6------------------------
+
+select fnome from fornecedor 		  -- nome de fornecedor
+where fcodigo 				  -- onde o codigo
+NOT IN (select fcodigo from fornecimento) -- NAO ESTA, em (fornecedores que fornecem algo)
+
+------------------------------------
+
+-----------7-------------------------
+
+select p.pcodigo, p.pnome, sum(fornecimento.quantidade) from peca p
+inner join fornecimento on fornecimento.pcodigo = p.pcodigo
+group by (p.pnome, p.pcodigo)
+order by (p.pcodigo);
+
+------------------------------------
+
+-----------8-------------------------
+
+select count(jcodigo) from projeto;
+
+------------------------------------
+
+-----------9-------------------------
+
+select p.pnome, p.cor from peca p
+inner join fornecimento on fornecimento.jcodigo = p.pcodigo
+where fornecimento.jcodigo = 3;
+
+------------------------------------
+
+-----------10-------------------------
+
+select fnome from fornecedor
+order by (fnome) asc;
+
+------------------------------------
+
+-----------11-------------------------
+
+select projeto.jnome from projeto
+where( 
+	select peca.pcodigo from peca
+	inner join fornecedor on fornecedor.fcodigo = peca.pcodigo
+	where (peca.pcidade = 'Londrina' and fornecedor.fcidade = 'Londrina')
+)
+
+------------------------------------
+
